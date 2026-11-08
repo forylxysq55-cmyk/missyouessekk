@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Çiçeği Herkes Alır Hayatım</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #10061e 0%, #030108 100%);
+      font-family: 'Caveat', cursive;
+      position: relative;
+    }
+
+    /* Üst Yazı */
+    .title {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #b054ff;
+      font-size: 2.3rem;
+      text-align: center;
+      width: 90%;
+      z-index: 10;
+      text-shadow: 0 0 10px rgba(176, 84, 255, 0.6), 0 0 20px rgba(176, 84, 255, 0.3);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Canvas (Performans odaklı çizim) */
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Dokunma/Tıklama Kalpleri */
+    .heart {
+      position: absolute;
+      color: #b054ff;
+      font-size: 16px;
+      pointer-events: none;
+      user-select: none;
+      animation: growAndFade 1.2s ease-out forwards;
+      transform-origin: center center;
+      text-shadow: 0 0 8px rgba(176, 84, 255, 0.8);
+      z-index: 20;
+    }
+
+    @keyframes growAndFade {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.2);
+      }
+      50% {
+        opacity: 0.9;
+        transform: translate(-50%, -70px) scale(1.6);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -120px) scale(2.2);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="title">Çiçeği herkes alır hayatım</h1>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      drawScene();
+    }
+
+    // Sabit Arka Plan Yıldızları
+    let stars = [];
+    function initStars() {
+      stars = [];
+      const starCount = Math.floor((window.innerWidth * window.innerHeight) / 3000);
+      for (let i = 0; i < starCount; i++) {
+        stars.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          r: Math.random() * 1.5 + 0.3,
+          alpha: Math.random() * 0.7 + 0.3
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.fillStyle = '#ffffff';
+      stars.forEach(s => {
+        ctx.globalAlpha = s.alpha;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // Az sayıda otlar
+    function drawGrass() {
+      const grassCount = Math.min(12, Math.floor(width / 35));
+      ctx.strokeStyle = '#2d0a4e';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+
+      for (let i = 0; i < grassCount; i++) {
+        const x = (width / grassCount) * i + Math.random() * 20;
+        const h = 80 + Math.random() * 100;
+        const curve = (Math.random() - 0.5) * 40;
+
+        ctx.beginPath();
+        ctx.moveTo(x, height);
+        ctx.quadraticCurveTo(x + curve, height - h / 2, x + curve * 1.5, height - h);
+        ctx.stroke();
+      }
+    }
+
+    // Yıldızlı / Parıltılı Çiçek Göbeği
+    function drawStarCenter(cx, cy, radius) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#e0aaff';
+      ctx.shadowBlur = 10;
+
+      // 4 Köşeli Parıltı Yıldızı
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        ctx.rotate(Math.PI / 2);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius / 3, 0);
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Yoğun Mor Çiçek Demeti
+    function drawFlower(x, y, scale, isStarFlower) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Çiçek Taç Yaprakları
+      const petalCount = 5;
+      const petalRadius = 18;
+
+      ctx.shadowColor = '#b054ff';
+      ctx.shadowBlur = 15;
+
+      for (let i = 0; i < petalCount; i++) {
+        const angle = (i * 2 * Math.PI) / petalCount;
+        const px = Math.cos(angle) * 14;
+        const py = Math.sin(angle) * 14;
+
+        ctx.beginPath();
+        ctx.fillStyle = isStarFlower ? '#9d4edd' : '#7b2cbf';
+        ctx.arc(px, py, petalRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Çiçek İç Halka (Aydınlatma)
+      ctx.beginPath();
+      ctx.fillStyle = '#c77dff';
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Yıldızlı çiçek ise ortasında yıldız parıltısı çiz
+      if (isStarFlower) {
+        drawStarCenter(0, 0, 12);
+      } else {
+        ctx.beginPath();
+        ctx.fillStyle = '#e0aaff';
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // Sap ve Çiçekleri Çiz (Yoğun Demet)
+    function drawBouquet() {
+      const centerX = width / 2;
+      const startY = height;
+      const topY = height * 0.38;
+
+      // Çiçek Sapları
+      const stems = 14;
+      ctx.strokeStyle = '#4a157a';
+      ctx.lineWidth = 2.5;
+
+      for (let i = 0; i < stems; i++) {
+        const targetX = centerX + (Math.random() - 0.5) * (width < 500 ? 180 : 260);
+        const targetY = topY + Math.random() * (height * 0.35);
+
+        ctx.beginPath();
+        ctx.moveTo(centerX + (Math.random() - 0.5) * 40, startY);
+        ctx.quadraticCurveTo(
+          centerX + (Math.random() - 0.5) * 80,
+          startY - (startY - targetY) * 0.5,
+          targetX,
+          targetY
+        );
+        ctx.stroke();
+
+        // Sap uçlarına yoğun çiçek yerleştirme
+        const isStar = i % 3 === 0; // Her 3 çiçekten biri yıldızlı
+        const scale = 0.7 + Math.random() * 0.5;
+        drawFlower(targetX, targetY, scale, isStar);
+      }
+    }
+
+    // Tüm Sahneyi Tek Seferde Çiz (Sıfır Kasma)
+    function drawScene() {
+      ctx.clearRect(0, 0, width, height);
